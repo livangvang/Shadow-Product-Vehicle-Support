@@ -24,18 +24,24 @@ export function useSearch<T>({
   const debouncedQuery = useDebounce(query, debounceMs);
 
   const results = useMemo(() => {
-    if (!debouncedQuery.trim()) return data;
+    const tokens = debouncedQuery
+      .toLowerCase()
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean);
 
-    const lower = debouncedQuery.toLowerCase();
-    return data.filter((item) =>
-      searchFields.some((field) => {
-        const value = item[field];
-        if (typeof value === "string") {
-          return value.toLowerCase().includes(lower);
-        }
-        return false;
-      })
-    );
+    if (tokens.length === 0) return data;
+
+    return data.filter((item) => {
+      const haystack = searchFields
+        .map((field) => {
+          const value = item[field];
+          return typeof value === "string" ? value.toLowerCase() : "";
+        })
+        .join(" ");
+
+      return tokens.every((token) => haystack.includes(token));
+    });
   }, [data, debouncedQuery, searchFields]);
 
   return { query, setQuery, results };
