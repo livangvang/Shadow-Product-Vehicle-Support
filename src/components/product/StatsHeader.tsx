@@ -1,6 +1,8 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
-import { getLocale, getTranslations } from "next-intl/server";
+import { useLocale, useTranslations } from "next-intl";
 import { PRODUCTS, type ProductStats } from "@/lib/types/product";
 
 interface StatsHeaderProps {
@@ -8,16 +10,15 @@ interface StatsHeaderProps {
   stats: ProductStats;
 }
 
-export async function StatsHeader({ slug, stats }: StatsHeaderProps) {
-  const t = await getTranslations("product");
-  const tProducts = await getTranslations(`products.${slug}`);
-  const locale = await getLocale();
+export function StatsHeader({ slug, stats }: StatsHeaderProps) {
+  const t = useTranslations("product");
+  const tProducts = useTranslations(`products.${slug}`);
+  const locale = useLocale();
   const product = PRODUCTS.find((p) => p.slug === slug);
 
   return (
     <section className="relative mt-16 overflow-hidden bg-gradient-to-br from-bg via-bg2 to-bg">
       <div className="mx-auto max-w-[1200px] px-5 py-15 md:px-10 md:py-20">
-        {/* Back link */}
         <Link
           href={`/${locale}`}
           className="mb-6 inline-flex items-center gap-1.5 text-sm text-text3 no-underline transition-colors hover:text-orange"
@@ -35,7 +36,6 @@ export async function StatsHeader({ slug, stats }: StatsHeaderProps) {
           {t("backToHome")}
         </Link>
 
-        {/* Stripes */}
         <div className="mb-6 flex gap-1">
           <span className="h-1 w-10 rounded-sm bg-orange" />
           <span className="h-1 w-10 rounded-sm bg-orange opacity-70" />
@@ -54,10 +54,9 @@ export async function StatsHeader({ slug, stats }: StatsHeaderProps) {
               </div>
             </div>
 
-            {/* Stats */}
             <div className="flex gap-4">
               <div className="min-w-[120px] rounded-xl border border-border bg-bg3 px-6 py-4">
-                <div className="text-4xl font-extrabold leading-none text-orange">
+                <div className="text-4xl font-extrabold leading-none text-orange transition-all">
                   {stats.vehicleCount.toLocaleString()}
                 </div>
                 <div className="mt-1 text-[10px] tracking-[1px] uppercase text-text3">
@@ -65,7 +64,7 @@ export async function StatsHeader({ slug, stats }: StatsHeaderProps) {
                 </div>
               </div>
               <div className="min-w-[120px] rounded-xl border border-border bg-bg3 px-6 py-4">
-                <div className="text-4xl font-extrabold leading-none text-orange">
+                <div className="text-4xl font-extrabold leading-none text-orange transition-all">
                   {stats.brandCount}
                 </div>
                 <div className="mt-1 text-[10px] tracking-[1px] uppercase text-text3">
@@ -75,7 +74,6 @@ export async function StatsHeader({ slug, stats }: StatsHeaderProps) {
             </div>
           </div>
 
-          {/* Product image — 跟首頁 ProductCard 相同做法：固定高度 + object-cover */}
           {product?.image && (
             <div className="relative h-[220px] w-full overflow-hidden rounded-2xl border border-border bg-bg3 md:w-[45%]">
               <Image
