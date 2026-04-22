@@ -63,7 +63,7 @@ export function StatsHeader({ slug, stats }: StatsHeaderProps) {
                 className="font-display m-0 text-[56px] md:text-[88px] leading-[0.92] tracking-[-2px] uppercase"
                 style={{ textWrap: "balance" }}
               >
-                {renderProductWordmark(slug, tProducts("name"), isZh)}
+                {renderProductWordmark(slug, tProducts("name"))}
               </h1>
 
               <p
@@ -112,10 +112,13 @@ function StatCell({ value, label, isZh }: { value: string; label: string; isZh: 
  * suffix (4S, EVO, 2PLUS, 2, etc.) we stack the suffix on its own line and
  * tint it orange — same vibe as the mockup's "E-DRIVE / 4S".
  */
-function renderProductWordmark(slug: string, name: string, isZh: boolean) {
-  // Chinese names stay on one line — no split
-  if (isZh) {
-    return <span className={isZh ? "zh" : ""}>{name}</span>;
+function renderProductWordmark(slug: string, name: string) {
+  // Only keep one-line layout when the name actually contains CJK characters.
+  // If the product name is still in English (even on zh pages), use the
+  // English two-line split so the visual stays consistent with /en.
+  const hasCJK = /[㐀-鿿豈-﫿]/.test(name);
+  if (hasCJK) {
+    return <span className="zh">{name}</span>;
   }
 
   // Known split points per product slug
