@@ -77,15 +77,9 @@ const TABLE_COLUMNS: Record<string, Column[]> = {
     { key: "harness", labelKey: "controller", type: "harness", width: "110px" },
     { key: "__status", labelKey: "status", type: "status", width: "110px", align: "right" },
   ],
-  stfilter: [
-    { key: "model", labelKey: "model", type: "text", width: "1.6fr" },
-    { key: "chassis", labelKey: "chassis", type: "chassis", width: "110px" },
-    { key: "year", labelKey: "year", type: "text", width: "100px", mono: true },
-    { key: "engine", labelKey: "engine", type: "text", width: "1.3fr", mono: true },
-    { key: "knNumber", labelKey: "knNumber", type: "text", width: "120px", mono: true },
-    { key: "shape", labelKey: "shape", type: "text", width: "100px" },
-    { key: "inStock", labelKey: "stock", type: "stock", width: "110px", align: "right" },
-  ],
+  // stfilter uses a custom spec-sheet card layout instead of table.
+  // Kept here for type consistency but not actually rendered as a table.
+  stfilter: [],
 };
 
 /* ─── Status marker ─── */
@@ -106,6 +100,126 @@ function StatusBadge({ verified, tLabels }: { verified: boolean; tLabels: (k: st
     <span className="font-brand inline-flex items-center gap-1.5 text-[10px] font-black tracking-[1.5px] text-yellow">
       <span className="inline-block h-1.5 w-1.5 rounded-full bg-yellow" />
       {tLabels("unverified").toUpperCase()}
+    </span>
+  );
+}
+
+/* ─── ST-Filter spec-sheet card: primary row + supporting row ─── */
+
+function STFilterCard({
+  vehicle,
+  idx,
+  tTable,
+  t,
+  isZh,
+}: {
+  vehicle: STFilterVehicle;
+  idx: number;
+  tTable: (k: string) => string;
+  t: (k: string) => string;
+  isZh: boolean;
+}) {
+  const [hover, setHover] = useState(false);
+
+  // Compose dimensions + weight from separate fields
+  const dims = [vehicle.outsideLength, vehicle.outsideWidth, vehicle.height]
+    .filter((v) => v && String(v).trim().length > 0)
+    .join(" × ");
+  const weight = vehicle.weight && String(vehicle.weight).trim().length > 0
+    ? String(vehicle.weight).trim()
+    : null;
+
+  const supporting: { label: string; value: string; mono?: boolean }[] = [];
+  if (vehicle.year) supporting.push({ label: tTable("year"), value: vehicle.year, mono: true });
+  if (vehicle.engine) supporting.push({ label: tTable("engine"), value: vehicle.engine, mono: true });
+  if (vehicle.oemNumber) supporting.push({ label: tTable("oemNumber"), value: vehicle.oemNumber, mono: true });
+  if (vehicle.swCode) supporting.push({ label: tTable("swCode"), value: vehicle.swCode, mono: true });
+  if (vehicle.packageContents) supporting.push({ label: tTable("packageContents"), value: vehicle.packageContents });
+  if (dims) supporting.push({ label: tTable("dimensions"), value: `${dims} mm`, mono: true });
+  if (weight) supporting.push({ label: tTable("weight"), value: `${weight} g`, mono: true });
+
+  return (
+    <div
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      className="relative border-b border-[#141414] transition-colors"
+      style={{
+        padding: "20px 24px",
+        background: hover
+          ? "linear-gradient(90deg, rgba(234,85,4,0.08), transparent 70%)"
+          : "transparent",
+        borderLeft: `2px solid ${hover ? "#EA5504" : "transparent"}`,
+      }}
+    >
+      {/* Primary row: index + model / chassis / part# */}
+      <div className="grid items-baseline gap-4" style={{ gridTemplateColumns: "48px 1fr auto" }}>
+        <div
+          className="font-brand text-[12px] font-black tracking-[1px] transition-colors"
+          style={{ color: hover ? "#EA5504" : "#333" }}
+        >
+          {String(idx + 1).padStart(3, "0")}
+        </div>
+        <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
+          <span className="font-display text-[20px] md:text-[22px] font-black leading-tight tracking-[-0.5px] uppercase">
+            {vehicle.model}
+          </span>
+          {vehicle.chassis && (
+            <span
+              className="font-brand text-[11px] font-black tracking-[0.5px] text-orange"
+              style={{
+                padding: "2px 8px",
+                background: "rgba(234,85,4,0.1)",
+                border: "1px solid rgba(234,85,4,0.35)",
+              }}
+            >
+              {vehicle.chassis}
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-3">
+          {vehicle.knNumber && (
+            <span className="font-mono text-[13px] md:text-[14px] font-bold tracking-[0.5px] text-orange">
+              {vehicle.knNumber}
+            </span>
+          )}
+          <StockBadge inStock={vehicle.inStock} t={t} />
+        </div>
+      </div>
+
+      {/* Supporting row: year · engine · OEM · SW · package · dims · weight */}
+      {supporting.length > 0 && (
+        <div className="mt-3 ml-12 flex flex-wrap gap-x-5 gap-y-1.5 text-[12px]">
+          {supporting.map((s, i) => (
+            <span key={i} className="inline-flex items-baseline gap-1.5">
+              <span className={`font-brand text-[9px] font-black uppercase tracking-[1.5px] text-text3 ${isZh ? "zh" : ""}`}>
+                {s.label}
+              </span>
+              <span className={`${s.mono ? "font-mono text-text2" : "text-text2"} ${isZh && !s.mono ? "zh" : ""}`}>
+                {s.value}
+              </span>
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function StockBadge({ inStock, t }: { inStock: boolean; t: (k: string) => string }) {
+  if (inStock) {
+    return (
+      <span className="font-brand inline-flex items-center gap-1.5 text-[10px] font-black tracking-[1.5px] text-green">
+        <span
+          className="inline-block h-1.5 w-1.5 rounded-full bg-green"
+          style={{ boxShadow: "0 0 8px #4ADE80" }}
+        />
+        {t("inStock").toUpperCase()}
+      </span>
+    );
+  }
+  return (
+    <span className="font-brand inline-flex items-center gap-1.5 text-[10px] font-black tracking-[1.5px] text-text3">
+      {t("orderAvailable").toUpperCase()}
     </span>
   );
 }
@@ -312,6 +426,8 @@ function BrandSection({
   gridTemplate,
   features,
   isCardLayout,
+  isStFilter,
+  isZh,
   t,
   tTable,
 }: {
@@ -324,6 +440,8 @@ function BrandSection({
   gridTemplate: string;
   features: Feature[] | null;
   isCardLayout: boolean;
+  isStFilter: boolean;
+  isZh: boolean;
   t: (k: string) => string;
   tTable: (k: string) => string;
 }) {
@@ -377,7 +495,20 @@ function BrandSection({
       </button>
 
       {open &&
-        (isCardLayout && features ? (
+        (isStFilter ? (
+          <div>
+            {vehicles.map((v, i) => (
+              <STFilterCard
+                key={i}
+                vehicle={v as STFilterVehicle}
+                idx={i}
+                tTable={tTable}
+                t={t}
+                isZh={isZh}
+              />
+            ))}
+          </div>
+        ) : isCardLayout && features ? (
           <div className="grid grid-cols-1 gap-2 p-4 md:grid-cols-2 lg:grid-cols-3">
             {vehicles.map((v, i) => (
               <VehicleCard
@@ -492,6 +623,7 @@ export function CompatibilityClient({
     setExpandedBrands(allExpanded ? new Set() : new Set(filteredBrands));
   }
 
+  const isStFilter = slug === "stfilter";
   const isCardLayout = slug in CARD_PRODUCTS;
   const features = CARD_PRODUCTS[slug] ?? null;
   const columns = TABLE_COLUMNS[slug] ?? TABLE_COLUMNS["4s"];
@@ -572,6 +704,8 @@ export function CompatibilityClient({
               gridTemplate={gridTemplate}
               features={features}
               isCardLayout={isCardLayout}
+              isStFilter={isStFilter}
+              isZh={isZh}
               t={t}
               tTable={tTable}
             />
