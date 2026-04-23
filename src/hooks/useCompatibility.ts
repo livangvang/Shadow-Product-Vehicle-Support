@@ -9,7 +9,9 @@ type VehicleItem = ProductVehicle | STFilterVehicle;
 
 interface UseCompatibilityProps {
   groupedData: Record<string, VehicleItem[]>;
-  searchFields: (keyof VehicleItem)[];
+  // `string[]` so callers can add variant-only fields such as STFilter's
+  // oemNumber / swCode / knNumber without TypeScript complaints.
+  searchFields: readonly string[];
 }
 
 export function useCompatibility({

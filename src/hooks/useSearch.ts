@@ -5,7 +5,11 @@ import { useDebounce } from "./useDebounce";
 
 interface UseSearchProps<T> {
   data: T[];
-  searchFields: (keyof T)[];
+  // Field names to include in full-text search. Using `string` (not `keyof T`)
+  // so callers can pass fields that only exist on some variants of a union
+  // type (e.g. STFilterVehicle-only fields on `ProductVehicle | STFilterVehicle`).
+  // Missing fields on an item simply contribute nothing to the haystack.
+  searchFields: readonly string[];
   debounceMs?: number;
 }
 
@@ -33,9 +37,10 @@ export function useSearch<T>({
     if (tokens.length === 0) return data;
 
     return data.filter((item) => {
+      const record = item as unknown as Record<string, unknown>;
       const haystack = searchFields
         .map((field) => {
-          const value = item[field];
+          const value = record[field];
           return typeof value === "string" ? value.toLowerCase() : "";
         })
         .join(" ");

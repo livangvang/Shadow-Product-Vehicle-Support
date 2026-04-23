@@ -579,7 +579,18 @@ export function CompatibilityClient({
 
   const { query, setQuery, displayData, totalVisible } = useCompatibility({
     groupedData,
-    searchFields: ["brand", "model", "chassis", "year", "engine"],
+    // STFilter-only fields (oemNumber / swCode / knNumber) are safe to include
+    // across all products — missing fields on other products simply don't match.
+    searchFields: [
+      "brand",
+      "model",
+      "chassis",
+      "year",
+      "engine",
+      "oemNumber",
+      "swCode",
+      "knNumber",
+    ],
   });
 
   const [activeBrand, setActiveBrand] = useState<string | null>(null);
